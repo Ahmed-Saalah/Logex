@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using Logex.API.Data;
 using Logex.API.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +35,11 @@ namespace Logex.API.Repository.Implementations
 
             _context.Set<T>().Remove(entity);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _context.Set<T>().AnyAsync(predicate);
         }
 
         public async Task<IEnumerable<T>> GetAllAsync()

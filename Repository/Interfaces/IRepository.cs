@@ -1,4 +1,6 @@
-﻿namespace Logex.API.Repository.Interfaces
+﻿using System.Linq.Expressions;
+
+namespace Logex.API.Repository.Interfaces
 {
     public interface IRepository<T>
         where T : class
@@ -8,5 +10,6 @@
         Task<IEnumerable<T>> GetAllAsync();
         Task<T> GetByIdAsync(int id);
         Task UpdateAsync(T entity);
+        Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate);
     }
 }
