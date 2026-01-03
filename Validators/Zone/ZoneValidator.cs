@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using Logex.API.Dtos.ZoneDtos;
 
-namespace Logex.API.Validation.Zone
+namespace Logex.API.Validators.Zone
 {
     public class CreateZoneValidator : AbstractValidator<ZoneDto>
     {

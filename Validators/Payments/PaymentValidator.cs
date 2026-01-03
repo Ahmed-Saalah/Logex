@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using Logex.API.Models;
 
-namespace Logex.API.Validation.Payments
+namespace Logex.API.Validators.Payments
 {
     public class PaymentValidator : AbstractValidator<Payment>
     {

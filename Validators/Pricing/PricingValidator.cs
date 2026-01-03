@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using Logex.API.Models;
 
-namespace Logex.API.Validation.Pricing
+namespace Logex.API.Validators.Pricing
 {
     public class PricingValidator : AbstractValidator<Shipment>
     {

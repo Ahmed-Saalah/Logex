@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using Logex.API.Dtos.CityDtos;
 
-namespace Logex.API.Validation.City
+namespace Logex.API.Validators.City
 {
     public class CreateCityValidator : AbstractValidator<CreateCityDto>
     {

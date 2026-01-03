@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using Logex.API.Dtos.IdentityDtos;
 
-namespace Logex.API.Validation.Authentication
+namespace Logex.API.Validators.Authentication
 {
     public class CreateUserValidator : AbstractValidator<RegisterDto>
     {

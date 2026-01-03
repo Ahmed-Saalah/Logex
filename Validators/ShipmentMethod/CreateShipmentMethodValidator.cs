@@ -1,11 +1,11 @@
 ﻿using FluentValidation;
 using Logex.API.Dtos.ShipmentMethodDtos;
 
-namespace Logex.API.Validation.ShipmentMethod
+namespace Logex.API.Validators.ShipmentMethod
 {
-    public class UpdateShipmentMethodValidator : AbstractValidator<CreateShipmentMethodDto>
+    public class CreateShipmentMethodValidator : AbstractValidator<CreateShipmentMethodDto>
     {
-        public UpdateShipmentMethodValidator()
+        public CreateShipmentMethodValidator()
         {
             RuleFor(x => x.Name)
                 .NotEmpty()

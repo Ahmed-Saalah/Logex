@@ -1,12 +1,16 @@
 ﻿using FluentValidation;
 using Logex.API.Dtos.ZoneRateDtos;
 
-namespace Logex.API.Validation.ZoneRate
+namespace Logex.API.Validators.ZoneRate
 {
-    public class UpdateZoneRateValidator : AbstractValidator<UpdateZoneRateDto>
+    public class CreateZoneRateValidator : AbstractValidator<CreateZoneRateDto>
     {
-        public UpdateZoneRateValidator()
+        public CreateZoneRateValidator()
         {
+            RuleFor(x => x.FromZoneId).GreaterThan(0).WithMessage("FromZoneId is required.");
+
+            RuleFor(x => x.ToZoneId).GreaterThan(0).WithMessage("ToZoneId is required.");
+
             RuleFor(x => x.BaseRate)
                 .GreaterThanOrEqualTo(0)
                 .WithMessage("Base Rate cannot be negative.")
