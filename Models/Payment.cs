@@ -9,7 +9,7 @@ namespace Logex.API.Models
         public string? CardNumber { get; set; }
         public string? CVC { get; set; }
         public string Status { get; set; } = PaymentStatus.Pending;
-        public int? ShipemntId { get; set; }
+        public int? ShipmentId { get; set; }
         public int UserrId { get; set; }
         public DateTime CreatedAt { get; set; }
         public Shipment? Shipment { get; set; }

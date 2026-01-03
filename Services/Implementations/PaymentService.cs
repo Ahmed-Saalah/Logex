@@ -1,4 +1,5 @@
-﻿using Logex.API.Common;
+﻿using FluentValidation;
+using Logex.API.Common;
 using Logex.API.Models;
 using Logex.API.Repository.Interfaces;
 using Logex.API.Services.Interfaces;
@@ -8,17 +9,21 @@ namespace Logex.API.Services.Implementations
     public class PaymentService : IPaymentService
     {
         private readonly IPaymentRepository _paymentRepository;
+        private readonly IValidator<Payment> _validator;
 
-        public PaymentService(IPaymentRepository paymentRepository)
+        public PaymentService(IPaymentRepository paymentRepository, IValidator<Payment> validator)
         {
             _paymentRepository = paymentRepository;
+            _validator = validator;
         }
 
         public async Task<Payment> CreatePaymentAsync(Payment payment)
         {
-            if (payment == null)
+            var validationResult = await _validator.ValidateAsync(payment);
+
+            if (!validationResult.IsValid)
             {
-                throw new ArgumentException("Payment cannot be null.");
+                throw new ValidationException(validationResult.Errors);
             }
 
             payment.CreatedAt = DateTime.UtcNow;
@@ -39,6 +44,13 @@ namespace Logex.API.Services.Implementations
 
         public async Task<ServiceResponse> UpdatePaymentAsync(int paymentId, Payment updatedPayment)
         {
+            var validationResult = await _validator.ValidateAsync(updatedPayment);
+
+            if (!validationResult.IsValid)
+            {
+                throw new ValidationException(validationResult.Errors);
+            }
+
             var existingPayment = await _paymentRepository.GetByIdAsync(paymentId);
 
             if (existingPayment == null)
@@ -48,7 +60,7 @@ namespace Logex.API.Services.Implementations
 
             existingPayment.Amount = updatedPayment.Amount;
             existingPayment.CreatedAt = updatedPayment.CreatedAt;
-            existingPayment.ShipemntId = updatedPayment.ShipemntId;
+            existingPayment.ShipmentId = updatedPayment.ShipmentId;
 
             await _paymentRepository.UpdateAsync(existingPayment);
             return new ServiceResponse(true, "payment updated successfully");
