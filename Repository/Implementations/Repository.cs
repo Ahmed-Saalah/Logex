@@ -18,7 +18,7 @@ namespace Logex.API.Repository.Implementations
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        public async Task<T> AddAsync(T entity)
+        public virtual async Task<T> AddAsync(T entity)
         {
             if (entity == null)
                 throw new ArgumentNullException(nameof(entity), "Entity cannot be null.");
@@ -27,7 +27,7 @@ namespace Logex.API.Repository.Implementations
             return entity;
         }
 
-        public async Task DeleteAsync(int id)
+        public virtual async Task DeleteAsync(int id)
         {
             var entity = await GetByIdAsync(id);
             if (entity == null)
@@ -37,17 +37,17 @@ namespace Logex.API.Repository.Implementations
             await _context.SaveChangesAsync();
         }
 
-        public async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate)
+        public virtual async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate)
         {
             return await _context.Set<T>().AnyAsync(predicate);
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync()
+        public virtual async Task<IEnumerable<T>> GetAllAsync()
         {
             return await _context.Set<T>().AsNoTracking().ToListAsync();
         }
 
-        public async Task<T> GetByIdAsync(int id)
+        public virtual async Task<T> GetByIdAsync(int id)
         {
             var entity = await _context.Set<T>().FindAsync(id);
             if (entity == null)
@@ -56,7 +56,7 @@ namespace Logex.API.Repository.Implementations
             return entity;
         }
 
-        public async Task UpdateAsync(T entity)
+        public virtual async Task UpdateAsync(T entity)
         {
             if (entity == null)
                 throw new ArgumentNullException(nameof(entity), "Entity cannot be null...");
