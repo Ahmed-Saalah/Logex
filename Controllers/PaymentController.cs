@@ -43,7 +43,7 @@ namespace Logex.API.Controllers
 
             var newPayment = new Payment
             {
-                ShipemntId = shipment.Id,
+                ShipmentId = shipment.Id,
                 Amount = totalAmount,
                 Status = PaymentStatus.Pending,
                 CreatedAt = DateTime.UtcNow,

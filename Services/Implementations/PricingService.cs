@@ -8,22 +8,14 @@ namespace Logex.API.Services.Implementations
     public class PricingService : IPricingService
     {
         private readonly IPricingRepository _pricingRepository;
-        private readonly IValidator<Shipment> _validator;
 
         public PricingService(IPricingRepository pricingRepository, IValidator<Shipment> validator)
         {
             _pricingRepository = pricingRepository;
-            _validator = validator;
         }
 
         public async Task<decimal> CalculateShipmentTotalAsync(Shipment shipment)
         {
-            var validationResult = await _validator.ValidateAsync(shipment);
-            if (!validationResult.IsValid)
-            {
-                throw new ValidationException(validationResult.Errors);
-            }
-
             var sourceZone = await _pricingRepository.GetZoneByCityNameAsync(
                 shipment.ShipperCity?.Trim()
             );

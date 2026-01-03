@@ -9,15 +9,10 @@ namespace Logex.API.Services.Implementations
     public class ShipmentMethodService : IShipmentMethodService
     {
         private readonly IShipmentMethodRepository _shipmentMethodRepository;
-        private IValidator<CreateShipmentMethodDto> _validator;
 
-        public ShipmentMethodService(
-            IShipmentMethodRepository shipmentMethodRepository,
-            IValidator<CreateShipmentMethodDto> validator
-        )
+        public ShipmentMethodService(IShipmentMethodRepository shipmentMethodRepository)
         {
             _shipmentMethodRepository = shipmentMethodRepository;
-            _validator = validator;
         }
 
         public async Task<ShipmentMethod> GetByIdAsync(int id)
@@ -44,12 +39,6 @@ namespace Logex.API.Services.Implementations
 
         public async Task<ShipmentMethod> CreateMethodAsync(CreateShipmentMethodDto request)
         {
-            var validationResult = await _validator.ValidateAsync(request);
-            if (!validationResult.IsValid)
-            {
-                throw new ValidationException(validationResult.Errors);
-            }
-
             var exists = await _shipmentMethodRepository.ExistsAsync(_ => _.Name == request.Name);
 
             if (exists)

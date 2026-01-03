@@ -1,31 +1,15 @@
-﻿using FluentValidation;
-using Logex.API.Common;
+﻿using Logex.API.Common;
 using Logex.API.Dtos.IdentityDtos;
 using Logex.API.Models;
 using Logex.API.Services.Interfaces;
 
 namespace Logex.API.Services.Implementations
 {
-    public class AuthService(
-        ITokenManagement tokenManagement,
-        IUserManagement userManagement,
-        IValidator<RegisterDto> createUserValidator,
-        IValidator<LoginDto> loginUserValidator
-    ) : IAuthService
+    public class AuthService(ITokenManagement tokenManagement, IUserManagement userManagement)
+        : IAuthService
     {
         public async Task<ServiceResponse> Register(RegisterDto user)
         {
-            var validationResult = await createUserValidator.ValidateAsync(user);
-
-            if (!validationResult.IsValid)
-            {
-                return new ServiceResponse
-                {
-                    Success = false,
-                    Message = validationResult.Errors[0].ErrorMessage,
-                };
-            }
-
             var newUser = new User
             {
                 UserName = user.Username,
@@ -48,12 +32,6 @@ namespace Logex.API.Services.Implementations
 
         public async Task<LoginResponse> Login(LoginDto user)
         {
-            var validationResult = await loginUserValidator.ValidateAsync(user);
-            if (!validationResult.IsValid)
-            {
-                return new LoginResponse(Message: validationResult.Errors[0].ErrorMessage);
-            }
-
             var mappedModel = new User { Email = user.Email, PasswordHash = user.Password };
 
             bool loginResult = await userManagement.LoginUser(mappedModel);

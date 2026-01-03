@@ -9,25 +9,15 @@ namespace Logex.API.Services.Implementations
     public class PaymentService : IPaymentService
     {
         private readonly IPaymentRepository _paymentRepository;
-        private readonly IValidator<Payment> _validator;
 
         public PaymentService(IPaymentRepository paymentRepository, IValidator<Payment> validator)
         {
             _paymentRepository = paymentRepository;
-            _validator = validator;
         }
 
         public async Task<Payment> CreatePaymentAsync(Payment payment)
         {
-            var validationResult = await _validator.ValidateAsync(payment);
-
-            if (!validationResult.IsValid)
-            {
-                throw new ValidationException(validationResult.Errors);
-            }
-
             payment.CreatedAt = DateTime.UtcNow;
-
             await _paymentRepository.AddAsync(payment);
             return payment;
         }
@@ -44,13 +34,6 @@ namespace Logex.API.Services.Implementations
 
         public async Task<ServiceResponse> UpdatePaymentAsync(int paymentId, Payment updatedPayment)
         {
-            var validationResult = await _validator.ValidateAsync(updatedPayment);
-
-            if (!validationResult.IsValid)
-            {
-                throw new ValidationException(validationResult.Errors);
-            }
-
             var existingPayment = await _paymentRepository.GetByIdAsync(paymentId);
 
             if (existingPayment == null)
