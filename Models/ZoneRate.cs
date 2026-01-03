@@ -6,6 +6,7 @@
     {
         public int Id { get; set; }
 
+        // TODO: Add uniqe constraint on (FromZoneId, ToZoneId)
         public int FromZoneId { get; set; }
         public int ToZoneId { get; set; }
 
