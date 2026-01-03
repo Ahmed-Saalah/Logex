@@ -9,6 +9,6 @@ namespace Logex.API.Services.Interfaces
         Task<City> GetByIdAsync(int id);
         Task<City> CreateCityAsync(CreateCityDto request);
         Task<City> UpdateCityAsync(int id, UpdateCityDto request);
-        Task DeleteCityAsync(int id);
+        Task<bool> ToggleStatusAsync(int id);
     }
 }

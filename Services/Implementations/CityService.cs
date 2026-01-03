@@ -1,6 +1,7 @@
 ﻿using Logex.API.Data;
 using Logex.API.Dtos.CityDtos;
 using Logex.API.Models;
+using Logex.API.Repository.Implementations;
 using Logex.API.Repository.Interfaces;
 using Logex.API.Services.Interfaces;
 
@@ -37,7 +38,7 @@ namespace Logex.API.Services.Implementations
                 throw new InvalidOperationException($"City '{request.Name}' already exists.");
             }
 
-            var zoneExists = await _zoneRepository.ExistsAsync(z => z.ZoneId == request.ZoneId);
+            var zoneExists = await _zoneRepository.ExistsAsync(z => z.Id == request.ZoneId);
             if (!zoneExists)
             {
                 throw new InvalidOperationException($"Zone ID {request.ZoneId} does not exist.");
@@ -58,10 +59,9 @@ namespace Logex.API.Services.Implementations
                 throw new KeyNotFoundException($"City with ID {id} not found.");
             }
 
-            // Validate Zone if changed
             if (city.ZoneId != request.ZoneId)
             {
-                var zoneExists = await _zoneRepository.ExistsAsync(z => z.ZoneId == request.ZoneId);
+                var zoneExists = await _zoneRepository.ExistsAsync(z => z.Id == request.ZoneId);
                 if (!zoneExists)
                 {
                     throw new InvalidOperationException(
@@ -77,15 +77,16 @@ namespace Logex.API.Services.Implementations
             return city;
         }
 
-        public async Task DeleteCityAsync(int id)
+        public async Task<bool> ToggleStatusAsync(int id)
         {
-            var city = await _cityRepository.GetByIdAsync(id);
-            if (city == null)
-            {
-                throw new KeyNotFoundException($"City with ID {id} not found.");
-            }
+            var city =
+                await _cityRepository.GetByIdAsync(id)
+                ?? throw new KeyNotFoundException("City not found.");
 
-            await _cityRepository.DeleteAsync(city.Id);
+            city.IsActive = !city.IsActive;
+
+            await _cityRepository.UpdateAsync(city);
+            return city.IsActive;
         }
     }
 }

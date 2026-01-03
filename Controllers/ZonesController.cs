@@ -1,4 +1,5 @@
-﻿using Logex.API.Dtos.CityDtos;
+﻿using Logex.API.Dtos.ZoneDtos;
+using Logex.API.Services.Implementations;
 using Logex.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,44 +8,46 @@ namespace Logex.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CitiesController : ControllerBase
+    public class ZonesController : ControllerBase
     {
-        private readonly ICityService _cityService;
+        private readonly IZoneService _zoneService;
 
-        public CitiesController(ICityService cityService)
+        public ZonesController(IZoneService zoneService)
         {
-            _cityService = cityService;
+            _zoneService = zoneService;
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var cities = await _cityService.GetAllAsync();
-            return Ok(cities);
+            var zones = await _zoneService.GetAllAsync();
+            return Ok(zones);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             try
             {
-                var city = await _cityService.GetByIdAsync(id);
-                return Ok(city);
+                var zone = await _zoneService.GetByIdAsync(id);
+                return Ok(zone);
             }
             catch (KeyNotFoundException)
             {
-                return NotFound(new { Message = "City not found." });
+                return NotFound(new { Message = "Zone not found." });
             }
         }
 
         [Authorize(Roles = "Admin")]
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateCityDto request)
+        public async Task<IActionResult> Create([FromBody] ZoneDto request)
         {
             try
             {
-                var city = await _cityService.CreateCityAsync(request);
-                return CreatedAtAction(nameof(GetById), new { id = city.Id }, city);
+                var zone = await _zoneService.CreateZoneAsync(request);
+                return CreatedAtAction(nameof(GetById), new { id = zone.Id }, zone);
             }
             catch (InvalidOperationException ex)
             {
@@ -54,16 +57,16 @@ namespace Logex.API.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] UpdateCityDto request)
+        public async Task<IActionResult> Update(int id, [FromBody] ZoneDto request)
         {
             try
             {
-                var updatedCity = await _cityService.UpdateCityAsync(id, request);
-                return Ok(updatedCity);
+                var zone = await _zoneService.UpdateZoneAsync(id, request);
+                return Ok(zone);
             }
             catch (KeyNotFoundException)
             {
-                return NotFound(new { Message = "City not found." });
+                return NotFound(new { Message = "Zone not found." });
             }
             catch (InvalidOperationException ex)
             {
@@ -77,7 +80,7 @@ namespace Logex.API.Controllers
         {
             try
             {
-                var newStatus = await _cityService.ToggleStatusAsync(id);
+                var newStatus = await _zoneService.ToggleStatusAsync(id);
                 return Ok(
                     new
                     {
@@ -93,7 +96,7 @@ namespace Logex.API.Controllers
             }
             catch (KeyNotFoundException)
             {
-                return NotFound(new { Message = "City not found." });
+                return NotFound(new { Message = "Zone not found." });
             }
         }
     }
