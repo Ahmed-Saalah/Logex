@@ -35,8 +35,8 @@ namespace Logex.API.Models
         public int ShipmentMethodId { get; set; }
         public ShipmentMethod ShipmentMethod { get; set; }
 
-        public int? UserId { get; set; }
-        public User? User { get; set; }
+        public int UserId { get; set; }
+        public User User { get; set; }
 
         public int? PaymentId { get; set; }
         public Payment? Payment { get; set; }

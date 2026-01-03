@@ -27,20 +27,19 @@ namespace Logex.API.Services.Implementations
             {
                 Mode = "payment",
                 ClientReferenceId = shipment.Id.ToString(),
-                // Use the passed origin to build dynamic URLs
-                SuccessUrl = $"{originUrl}/confirmation.html",
-                CancelUrl = $"{originUrl}/index.html",
+                SuccessUrl = $"{originUrl}/payment-success?id={shipment.Id}", // Frontend Route
+                CancelUrl = $"{originUrl}/payment-failed?id={shipment.Id}",
                 LineItems = new List<SessionLineItemOptions>
                 {
                     new SessionLineItemOptions
                     {
                         PriceData = new SessionLineItemPriceDataOptions
                         {
-                            Currency = "usd",
+                            Currency = "egp",
                             ProductData = new SessionLineItemPriceDataProductDataOptions
                             {
-                                Name = $"Shipment #{shipment.Id}",
-                                Description = shipment.ShipmentMethod?.Name ?? "Logistics Service",
+                                Name = $"Logex Shipment #{shipment.TrackingNumber}",
+                                Description = $"Delivery via {shipment.ShipmentMethod?.Name}",
                             },
                             UnitAmount = (long)(payment.Amount * 100),
                         },
@@ -51,6 +50,7 @@ namespace Logex.API.Services.Implementations
                 {
                     { "PaymentId", payment.Id.ToString() },
                     { "ShipmentId", shipment.Id.ToString() },
+                    { "UserId", shipment.UserId.ToString() },
                 },
             };
 

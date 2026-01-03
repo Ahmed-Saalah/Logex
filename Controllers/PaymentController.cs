@@ -2,30 +2,29 @@
 using Logex.API.Dtos.PaymentDtos;
 using Logex.API.Models;
 using Logex.API.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Logex.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class PaymentController : ControllerBase
     {
         private readonly IShipmentService _shipmentService;
         private readonly IPaymentService _paymentService;
         private readonly IStripePaymentService _stripePaymentService;
-        private readonly IPricingService _pricingService;
 
         public PaymentController(
             IShipmentService shipmentService,
             IPaymentService paymentService,
-            IStripePaymentService stripePaymentService,
-            IPricingService pricingService
+            IStripePaymentService stripePaymentService
         )
         {
             _shipmentService = shipmentService;
             _paymentService = paymentService;
             _stripePaymentService = stripePaymentService;
-            _pricingService = pricingService;
         }
 
         [HttpPost("checkout")]
@@ -39,7 +38,12 @@ namespace Logex.API.Controllers
                 return NotFound(new { Message = "Shipment not found." });
             }
 
-            var totalAmount = await _pricingService.CalculateShipmentTotalAsync(shipment);
+            if (shipment.Status != ShipmentStatus.Pending)
+            {
+                return BadRequest(new { Message = "This shipment is already processed or paid." });
+            }
+
+            var totalAmount = shipment.TotalCost;
 
             var newPayment = new Payment
             {
@@ -47,12 +51,13 @@ namespace Logex.API.Controllers
                 Amount = totalAmount,
                 Status = PaymentStatus.Pending,
                 CreatedAt = DateTime.UtcNow,
+                UserId = shipment.UserId,
             };
 
             var createdPayment = await _paymentService.CreatePaymentAsync(newPayment);
 
             shipment.PaymentId = createdPayment.Id;
-            await _shipmentService.Update(shipment);
+            //await _shipmentService.UpdateAsync(shipment);
 
             var origin = $"{Request.Scheme}://{Request.Host}";
             var checkoutUrl = await _stripePaymentService.CreateCheckoutSessionAsync(
