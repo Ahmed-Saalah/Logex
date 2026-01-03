@@ -12,7 +12,12 @@ namespace Logex.API.Repository.Implementations
 
         public override async Task<IEnumerable<City>> GetAllAsync()
         {
-            return await _context.Cities.Include(c => c.Zone).OrderBy(c => c.Name).ToListAsync();
+            return await _context
+                .Cities.Where(c => c.IsActive)
+                .Include(c => c.Zone)
+                .OrderBy(c => c.Name)
+                .AsNoTracking()
+                .ToListAsync();
         }
 
         public override async Task<City?> GetByIdAsync(int id)

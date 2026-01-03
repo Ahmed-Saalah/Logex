@@ -10,6 +10,14 @@ namespace Logex.API.Repository.Implementations
         public ShipmentMethodRepository(AppDbContext context)
             : base(context) { }
 
+        public override async Task<IEnumerable<ShipmentMethod>> GetAllAsync()
+        {
+            return await _context
+                .ShipmentMethods.Where(_ => _.IsActive)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
         public async Task<ShipmentMethod?> GetShipmentMethodByNameAsync(string name)
         {
             return await _context.ShipmentMethods.FirstOrDefaultAsync(m => m.Name == name);

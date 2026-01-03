@@ -47,7 +47,7 @@ namespace Logex.API.Repository.Implementations
             return await _context.Set<T>().AsNoTracking().ToListAsync();
         }
 
-        public virtual async Task<T> GetByIdAsync(int id)
+        public virtual async Task<T?> GetByIdAsync(int id)
         {
             var entity = await _context.Set<T>().FindAsync(id);
             if (entity == null)

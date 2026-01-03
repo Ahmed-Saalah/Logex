@@ -10,6 +10,11 @@ namespace Logex.API.Repository.Implementations
         public ZoneRepository(AppDbContext context)
             : base(context) { }
 
+        public override async Task<IEnumerable<Zone>> GetAllAsync()
+        {
+            return await _context.Zones.Where(_ => _.IsActive).AsNoTracking().ToListAsync();
+        }
+
         public async Task<bool> IsZoneInUseAsync(int zoneId)
         {
             return await _context.Cities.AnyAsync(c => c.ZoneId == zoneId)
