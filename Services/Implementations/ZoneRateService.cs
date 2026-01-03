@@ -9,12 +9,10 @@ namespace Logex.API.Services.Implementations
     public class ZoneRateService : IZoneRateService
     {
         private readonly IZoneRateRepository _zoneRateRepository;
-        private readonly AppDbContext _context;
 
-        public ZoneRateService(IZoneRateRepository zoneRateRepository, AppDbContext context)
+        public ZoneRateService(IZoneRateRepository zoneRateRepository)
         {
             _zoneRateRepository = zoneRateRepository;
-            _context = context;
         }
 
         public async Task<IEnumerable<ZoneRate>> GetAllAsync()

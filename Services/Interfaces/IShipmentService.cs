@@ -10,14 +10,10 @@ namespace Logex.API.Services.Interfaces
 
         Task<Shipment> GetByIdAsync(int id);
 
-        Task<Shipment> GetByTrackingNumber(string trackingNumber);
+        Task<Shipment> GetByTrackingNumberAsync(string trackingNumber);
 
-        Task<ServiceResponse> UpdateShipmentAsync(int id, UpdateShipmentDto shipment);
+        Task<Shipment> UpdateAsync(int id, UpdateShipmentDto shipment);
 
         Task<ServiceResponse> DeleteAsync(int id);
-
-        Task<ServiceResponse> Update(Shipment shipment);
-
-        decimal GetTotalCost(int quantity, decimal weight, decimal shipmentMethodCost);
     }
 }

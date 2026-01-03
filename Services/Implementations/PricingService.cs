@@ -1,49 +1,63 @@
-﻿using FluentValidation;
-using Logex.API.Models;
-using Logex.API.Repository.Interfaces;
+﻿using Logex.API.Repository.Interfaces;
 using Logex.API.Services.Interfaces;
 
 namespace Logex.API.Services.Implementations
 {
     public class PricingService : IPricingService
     {
-        private readonly IPricingRepository _pricingRepository;
+        private readonly IZoneRateRepository _zoneRateRepository;
+        private readonly ICityRepository _cityRepository;
+        private readonly IShipmentMethodService _shipmentMethodService;
 
-        public PricingService(IPricingRepository pricingRepository, IValidator<Shipment> validator)
+        public PricingService(
+            IZoneRateRepository zoneRateRepository,
+            ICityRepository cityRepository,
+            IShipmentMethodService shipmentMethodService
+        )
         {
-            _pricingRepository = pricingRepository;
+            _zoneRateRepository = zoneRateRepository;
+            _cityRepository = cityRepository;
+            _shipmentMethodService = shipmentMethodService;
         }
 
-        public async Task<decimal> CalculateShipmentTotalAsync(Shipment shipment)
+        public async Task<decimal> CalculateShipmentTotalAsync(
+            int shipperCityId,
+            int receiverCityId,
+            int quantity,
+            decimal weight,
+            int methodId
+        )
         {
-            var sourceZone = await _pricingRepository.GetZoneByCityNameAsync(
-                shipment.ShipperCity?.Trim()
-            );
+            var shipperCity = await _cityRepository.GetByIdAsync(shipperCityId);
+            var receiverCity = await _cityRepository.GetByIdAsync(receiverCityId);
 
-            var destZone = await _pricingRepository.GetZoneByCityNameAsync(
-                shipment.ReceiverCity?.Trim()
-            );
-
-            if (sourceZone == null || destZone == null)
+            if (shipperCity == null || receiverCity == null)
             {
-                throw new InvalidOperationException("Invalid source or destination city.");
+                throw new InvalidOperationException(
+                    "One or both cities not found in coverage area."
+                );
             }
 
-            var rateRule =
-                await _pricingRepository.GetRateByZonesAsync(sourceZone.Id, destZone.Id)
-                ?? throw new InvalidOperationException("No pricing configuration found.");
+            var zoneRate = await _zoneRateRepository.GetByRouteAsync(
+                shipperCity.ZoneId,
+                receiverCity.ZoneId
+            );
 
-            decimal totalWeight = shipment.Quantity * shipment.Weight;
-            decimal weightCost = totalWeight * shipment.ShipmentMethod.Cost;
-            decimal zoneCost = rateRule.BaseRate;
-
-            // If the route has a specific extra cost per KG, add it here
-            if (rateRule.AdditionalWeightCost > 0)
+            if (zoneRate == null)
             {
-                weightCost += (totalWeight * rateRule.AdditionalWeightCost.Value);
+                throw new InvalidOperationException(
+                    $"No pricing rule defined for route: {shipperCity.Name} -> {receiverCity.Name}"
+                );
             }
 
-            return weightCost + zoneCost;
+            var methodBaseCost = await _shipmentMethodService.GetShipmentMethodCostAsync(methodId);
+
+            decimal totalWeight = weight * quantity;
+
+            decimal weightCostPerKg = methodBaseCost + zoneRate.AdditionalWeightCost!.Value;
+            decimal total = zoneRate.BaseRate + (totalWeight * weightCostPerKg);
+
+            return total;
         }
     }
 }

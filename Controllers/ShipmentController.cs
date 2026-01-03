@@ -11,17 +11,17 @@ namespace Logex.API.Controllers
     {
         private readonly IShipmentService _shipmentService;
         private readonly IUserManagement _userManagement;
-        private readonly IShipmentMethodService _shipmentMethodService;
+        private readonly IPricingService _pricingService;
 
         public ShipmentController(
             IShipmentService shipmentService,
             IUserManagement userManagement,
-            IShipmentMethodService shipmentMethodService
+            IPricingService pricingService
         )
         {
             _shipmentService = shipmentService;
             _userManagement = userManagement;
-            _shipmentMethodService = shipmentMethodService;
+            _pricingService = pricingService;
         }
 
         [HttpGet("{id:int}")]
@@ -42,6 +42,7 @@ namespace Logex.API.Controllers
                     ShipperName = shipemnt.ShipperName,
                     ReceiverName = shipemnt.ReceiverName,
                     CreatedAt = shipemnt.CreatedAt,
+                    TotalCost = shipemnt.TotalCost,
                     Status = shipemnt.Status!,
                 };
 
@@ -65,7 +66,7 @@ namespace Logex.API.Controllers
         {
             try
             {
-                var shipemnt = await _shipmentService.GetByTrackingNumber(trackingNumber);
+                var shipemnt = await _shipmentService.GetByTrackingNumberAsync(trackingNumber);
 
                 if (shipemnt == null)
                 {
@@ -77,8 +78,9 @@ namespace Logex.API.Controllers
                     ShipmentId = shipemnt.Id,
                     ShipperName = shipemnt.ShipperName,
                     ReceiverName = shipemnt.ReceiverName,
+                    TotalCost = shipemnt.TotalCost,
                     CreatedAt = shipemnt.CreatedAt,
-                    Status = shipemnt.Status!,
+                    Status = shipemnt.Status,
                 };
 
                 return Ok(shipmentDTO);
@@ -100,10 +102,6 @@ namespace Logex.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateShipmentDto createShipmentDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
             try
             {
                 var username = User.Identity?.Name;
@@ -145,30 +143,39 @@ namespace Logex.API.Controllers
             [FromBody] UpdateShipmentDto updateShipmentDto
         )
         {
-            if (updateShipmentDto == null)
-            {
-                return BadRequest(new { Message = "Shipment data cannot be null." });
-            }
-
             try
             {
-                await _shipmentService.UpdateShipmentAsync(id, updateShipmentDto);
-                return NoContent();
+                var updatedShipment = await _shipmentService.UpdateAsync(id, updateShipmentDto);
+                return Ok(updatedShipment);
             }
-            catch (ArgumentException ex)
+            catch (KeyNotFoundException)
+            {
+                return NotFound(new { Message = "Shipment not found." });
+            }
+            catch (InvalidOperationException ex)
             {
                 return BadRequest(new { Message = ex.Message });
             }
-            catch (Exception ex)
+        }
+
+        [HttpPost("calculate-rate")]
+        public async Task<IActionResult> CalculateRate([FromBody] CreateShipmentDto dto)
+        {
+            try
             {
-                return StatusCode(
-                    500,
-                    new
-                    {
-                        Message = "An error occurred while updating the shipment.",
-                        Error = ex.Message,
-                    }
+                var cost = await _pricingService.CalculateShipmentTotalAsync(
+                    dto.ShipperCityId,
+                    dto.ReceiverCityId,
+                    dto.Quantity,
+                    dto.Weight,
+                    dto.ShipmentMethodId
                 );
+
+                return Ok(new { EstimatedCost = cost, Currency = "EGP" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
             }
         }
 
@@ -191,45 +198,6 @@ namespace Logex.API.Controllers
                         Error = ex.Message,
                     }
                 );
-            }
-        }
-
-        [HttpPost("rateCalculator")]
-        public async Task<IActionResult> RateCalculatorAsync(
-            [FromBody] ShipmentWithCalculatedRateDto shipment
-        )
-        {
-            try
-            {
-                if (shipment.Quantity <= 0 || shipment.Weight <= 0)
-                {
-                    return BadRequest("Invalid input parameters.");
-                }
-
-                var shipmentMethod = await _shipmentMethodService.GetByIdAsync(
-                    shipment.ShipmentMethodId
-                );
-
-                if (shipmentMethod == null)
-                {
-                    return NotFound("Shipment method not found.");
-                }
-
-                var shipmentMethodCost = await _shipmentMethodService.GetShipmentMethodCostAsync(
-                    shipment.ShipmentMethodId
-                );
-
-                var totalCost = _shipmentService.GetTotalCost(
-                    shipment.Quantity,
-                    shipment.Weight,
-                    shipmentMethodCost
-                );
-
-                return Ok(new { TotalCost = totalCost });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, $"An error occurred while calculating the shipment rate.");
             }
         }
     }

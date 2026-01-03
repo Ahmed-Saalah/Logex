@@ -1,9 +1,13 @@
-﻿using Logex.API.Models;
-
-namespace Logex.API.Services.Interfaces
+﻿namespace Logex.API.Services.Interfaces
 {
     public interface IPricingService
     {
-        Task<decimal> CalculateShipmentTotalAsync(Shipment shipment);
+        Task<decimal> CalculateShipmentTotalAsync(
+            int shipperCityId,
+            int receiverCityId,
+            int quantity,
+            decimal weight,
+            int methodId
+        );
     }
 }

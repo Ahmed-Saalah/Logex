@@ -1,5 +1,7 @@
 ﻿using Logex.API.Common;
+using Logex.API.Constants;
 using Logex.API.Dtos.ShipmentDtos;
+using Logex.API.Helpers;
 using Logex.API.Models;
 using Logex.API.Repository.Interfaces;
 using Logex.API.Services.Interfaces;
@@ -9,81 +11,66 @@ namespace Logex.API.Services.Implementations
     public class ShipmentService : IShipmentService
     {
         private readonly IShipmentRepository _shipmentRepository;
-        private readonly IShipmentMethodRepository _shipmentMethodRepository;
+        private readonly IPricingService _pricingService;
 
         public ShipmentService(
             IShipmentRepository shipmentRepository,
-            IPaymentRepository paymentRepository,
-            IShipmentMethodRepository shipmentMethodRepository
+            IShipmentMethodRepository shipmentMethodRepository,
+            IPricingService pricingService
         )
         {
             _shipmentRepository = shipmentRepository;
-            _shipmentMethodRepository = shipmentMethodRepository;
+            _pricingService = pricingService;
         }
 
-        public async Task<Shipment> CreateShipmentAsync(
-            CreateShipmentDto shipmentCreateDTO,
-            int userId
-        )
+        public async Task<Shipment> GetByIdAsync(int id)
         {
-            ShipmentMethod shipmentMethod = null;
+            return await _shipmentRepository.GetByIdAsync(id);
+        }
 
-            if (shipmentCreateDTO.ShipmentMethodId.HasValue)
-            {
-                shipmentMethod = await _shipmentMethodRepository.GetAsync(sm =>
-                    sm.Id == shipmentCreateDTO.ShipmentMethodId
-                );
-            }
+        public async Task<Shipment> GetByTrackingNumberAsync(string trackingNumber)
+        {
+            return await _shipmentRepository.GetShipmentByTrackingNumberAsync(trackingNumber);
+        }
 
-            if (shipmentMethod == null)
-            {
-                shipmentMethod = await _shipmentMethodRepository.GetShipmentMethodByNameAsync(
-                    "Standard"
-                );
-            }
+        public async Task<Shipment> CreateShipmentAsync(CreateShipmentDto dto, int userId)
+        {
+            decimal calculatedCost = await _pricingService.CalculateShipmentTotalAsync(
+                dto.ShipperCityId,
+                dto.ReceiverCityId,
+                dto.Quantity,
+                dto.Weight,
+                dto.ShipmentMethodId
+            );
 
-            if (shipmentMethod == null)
-            {
-                throw new Exception("Unable to find a valid ShipmentMethod.");
-            }
-
-            if (shipmentMethod == null)
-            {
-                throw new Exception("Unable to find a valid ShipmentMethod.");
-            }
+            string trackingNumber = WaybillNumberGenerator.Generate();
 
             try
             {
                 var shipment = new Shipment
                 {
-                    ShipperName = shipmentCreateDTO.ShipperName,
-                    ShipperEmail = shipmentCreateDTO.ShipperEmail,
-                    ShipperPhone = shipmentCreateDTO.ShipperPhone,
-                    ShipperCountry = shipmentCreateDTO.ShipperCountry,
-                    ShipperCity = shipmentCreateDTO.ShipperCity,
-                    ShipperStreet = shipmentCreateDTO.ShipperStreet,
-                    ReceiverName = shipmentCreateDTO.ReceiverName,
-                    ReceiverEmail = shipmentCreateDTO.ReceiverEmail,
-                    ReceiverPhone = shipmentCreateDTO.ReceiverPhone,
-                    ReceiverCountry = shipmentCreateDTO.ReceiverCountry,
-                    ReceiverCity = shipmentCreateDTO.ReceiverCity,
-                    ReceiverStreet = shipmentCreateDTO.ReceiverStreet,
-                    Quantity = shipmentCreateDTO.Quantity,
-                    Weight = shipmentCreateDTO.Weight,
-                    Description = shipmentCreateDTO.Description,
-                    Status = shipmentCreateDTO.Status,
-                    TrackingNumber = Guid.NewGuid()
-                        .ToString()
-                        .Replace("-", "")
-                        .Substring(0, 10)
-                        .ToUpper(),
-                    UserId = userId,
+                    TrackingNumber = trackingNumber,
                     CreatedAt = DateTime.UtcNow,
-                    ShipmentMethod = shipmentMethod,
+                    Quantity = dto.Quantity,
+                    Weight = dto.Weight,
+                    Description = dto.Description!,
+                    Status = ShipmentStatus.Pending,
+                    TotalCost = calculatedCost,
+                    ShipperName = dto.ShipperName,
+                    ShipperEmail = dto.ShipperEmail!,
+                    ShipperPhone = dto.ShipperPhone,
+                    ShipperStreet = dto.ShipperStreet,
+                    ShipperCityId = dto.ShipperCityId,
+                    ReceiverName = dto.ReceiverName,
+                    ReceiverEmail = dto.ReceiverEmail!,
+                    ReceiverPhone = dto.ReceiverPhone,
+                    ReceiverStreet = dto.ReceiverStreet,
+                    ReceiverCityId = dto.ReceiverCityId,
+                    ShipmentMethodId = dto.ShipmentMethodId,
+                    UserId = userId,
                 };
 
                 var createdShipment = await _shipmentRepository.AddAsync(shipment);
-
                 return createdShipment;
             }
             catch
@@ -92,37 +79,53 @@ namespace Logex.API.Services.Implementations
             }
         }
 
-        public async Task<Shipment> GetByIdAsync(int id)
-        {
-            return await _shipmentRepository.GetByIdAsync(id);
-        }
-
-        public async Task<Shipment> GetByTrackingNumber(string trackingNumber)
-        {
-            return await _shipmentRepository.GetShipmentByTrackingNumberAsync(trackingNumber);
-        }
-
-        public async Task<ServiceResponse> UpdateShipmentAsync(int id, UpdateShipmentDto shipment)
+        public async Task<Shipment> UpdateAsync(int id, UpdateShipmentDto dto)
         {
             var existingShipment = await _shipmentRepository.GetByIdAsync(id);
 
             if (existingShipment == null)
             {
-                return new ServiceResponse(false, "Shipment not found.");
+                throw new KeyNotFoundException($"Shipment with ID {id} not found.");
             }
 
-            existingShipment.ShipperCountry = shipment.ShipperCountry;
-            existingShipment.ShipperCity = shipment.ShipperCity;
-            existingShipment.ShipperStreet = shipment.ShipperStreet;
-            existingShipment.ShipperPhone = shipment.ShipperPhone;
+            if (existingShipment.Status != ShipmentStatus.Pending)
+            {
+                throw new InvalidOperationException(
+                    "Cannot update a shipment that is already in progress."
+                );
+            }
 
-            existingShipment.ReceiverCountry = shipment.ReceiverCountry;
-            existingShipment.ReceiverCity = shipment.ReceiverCity;
-            existingShipment.ReceiverStreet = shipment.ReceiverStreet;
-            existingShipment.ReceiverPhone = shipment.ReceiverPhone;
+            bool priceAffectingChange =
+                existingShipment.Weight != dto.Weight
+                || existingShipment.Quantity != dto.Quantity
+                || existingShipment.ShipperCityId != dto.ShipperCityId
+                || existingShipment.ReceiverCityId != dto.ReceiverCityId
+                || existingShipment.ShipmentMethodId != dto.ShipmentMethodId;
+
+            if (priceAffectingChange)
+            {
+                existingShipment.TotalCost = await _pricingService.CalculateShipmentTotalAsync(
+                    dto.ShipperCityId,
+                    dto.ReceiverCityId,
+                    dto.Quantity,
+                    dto.Weight,
+                    dto.ShipmentMethodId
+                );
+            }
+
+            existingShipment.ShipperCityId = dto.ShipperCityId;
+            existingShipment.ShipperStreet = dto.ShipperStreet;
+            existingShipment.ShipperPhone = dto.ShipperPhone;
+            existingShipment.ReceiverCityId = dto.ReceiverCityId;
+            existingShipment.ReceiverStreet = dto.ReceiverStreet;
+            existingShipment.ReceiverPhone = dto.ReceiverPhone;
+            existingShipment.ShipmentMethodId = dto.ShipmentMethodId;
+            existingShipment.Quantity = dto.Quantity;
+            existingShipment.Weight = dto.Weight;
 
             await _shipmentRepository.UpdateAsync(existingShipment);
-            return new ServiceResponse(false, "Shipment updated successfully");
+
+            return existingShipment;
         }
 
         public async Task<ServiceResponse> DeleteAsync(int id)
@@ -135,24 +138,6 @@ namespace Logex.API.Services.Implementations
 
             await _shipmentRepository.DeleteAsync(id);
             return new ServiceResponse(true, "Shipment deleted successfully.");
-        }
-
-        public async Task<ServiceResponse> Update(Shipment shipment)
-        {
-            var existingShipment = await _shipmentRepository.GetByIdAsync(shipment.Id);
-
-            if (existingShipment == null)
-            {
-                return new ServiceResponse(false, "Shipment not found");
-            }
-
-            await _shipmentRepository.UpdateAsync(existingShipment);
-            return new ServiceResponse(true, "Shipment updated successfully.");
-        }
-
-        public decimal GetTotalCost(int quantity, decimal weight, decimal shipmentMethodCost)
-        {
-            return weight * quantity + shipmentMethodCost;
         }
     }
 }
