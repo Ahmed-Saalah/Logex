@@ -6,9 +6,10 @@
     {
         public int Id { get; set; }
 
-        // TODO: Add uniqe constraint on (FromZoneId, ToZoneId)
         public int FromZoneId { get; set; }
         public int ToZoneId { get; set; }
+        public Zone FromZone { get; set; }
+        public Zone ToZone { get; set; }
 
         // The base cost for moving a shipment between these zones
         public decimal BaseRate { get; set; }

@@ -7,6 +7,6 @@
         public string Name { get; set; }
         public int ZoneId { get; set; }
         public bool IsActive { get; set; } = true;
-        public Zone Zone { get; set; }
+        public Zone? Zone { get; set; }
     }
 }
