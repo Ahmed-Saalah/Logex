@@ -14,8 +14,7 @@ namespace Logex.API.Services.Implementations
         public ShipmentService(
             IShipmentRepository shipmentRepository,
             IPaymentRepository paymentRepository,
-            IShipmentMethodRepository shipmentMethodRepository,
-            IStripePaymentService stripePaymentService
+            IShipmentMethodRepository shipmentMethodRepository
         )
         {
             _shipmentRepository = shipmentRepository;
