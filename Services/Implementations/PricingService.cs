@@ -1,4 +1,5 @@
-﻿using Logex.API.Models;
+﻿using FluentValidation;
+using Logex.API.Models;
 using Logex.API.Repository.Interfaces;
 using Logex.API.Services.Interfaces;
 
@@ -7,24 +8,20 @@ namespace Logex.API.Services.Implementations
     public class PricingService : IPricingService
     {
         private readonly IPricingRepository _pricingRepository;
+        private readonly IValidator<Shipment> _validator;
 
-        public PricingService(IPricingRepository pricingRepository)
+        public PricingService(IPricingRepository pricingRepository, IValidator<Shipment> validator)
         {
             _pricingRepository = pricingRepository;
+            _validator = validator;
         }
 
         public async Task<decimal> CalculateShipmentTotalAsync(Shipment shipment)
         {
-            if (shipment == null)
+            var validationResult = await _validator.ValidateAsync(shipment);
+            if (!validationResult.IsValid)
             {
-                throw new ArgumentNullException(nameof(shipment));
-            }
-
-            if (shipment.ShipmentMethod == null)
-            {
-                throw new InvalidOperationException(
-                    "ShipmentMethod is required for price calculation."
-                );
+                throw new ValidationException(validationResult.Errors);
             }
 
             var sourceZone = await _pricingRepository.GetZoneByCityNameAsync(
