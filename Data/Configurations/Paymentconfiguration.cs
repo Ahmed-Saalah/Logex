@@ -21,7 +21,7 @@ namespace Logex.API.Data.Configurations
             builder
                 .HasOne(p => p.User)
                 .WithMany()
-                .HasForeignKey(p => p.UserrId)
+                .HasForeignKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }

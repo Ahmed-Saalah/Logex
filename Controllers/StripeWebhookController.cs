@@ -17,16 +17,19 @@ namespace Logex.API.Controllers
         private readonly string _webhookSecret;
         private readonly IPaymentService _paymentService;
         private readonly IShipmentRepository _shipmentRepository;
+        private readonly ILogger<StripeWebhookController> _logger;
 
         public StripeWebhookController(
             IOptions<StripeOptions> stripeOptions,
             IPaymentService paymentService,
-            IShipmentRepository shipmentRepository
+            IShipmentRepository shipmentRepository,
+            ILogger<StripeWebhookController> logger
         )
         {
             _webhookSecret = stripeOptions.Value.WebhookSecret;
             _paymentService = paymentService;
             _shipmentRepository = shipmentRepository;
+            _logger = logger;
         }
 
         [HttpPost("stripe")]
@@ -34,52 +37,106 @@ namespace Logex.API.Controllers
         {
             var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
 
+            Event stripeEvent;
+
             try
             {
-                var stripeEvent = EventUtility.ConstructEvent(
+                stripeEvent = EventUtility.ConstructEvent(
                     json,
                     Request.Headers["Stripe-Signature"],
                     _webhookSecret
                 );
-
-                if (stripeEvent.Type == EventTypes.CheckoutSessionCompleted)
-                {
-                    var session = stripeEvent.Data.Object as Session;
-
-                    if (
-                        session?.Metadata != null
-                        && session.Metadata.TryGetValue("PaymentId", out var paymentIdStr)
-                    )
-                    {
-                        int paymentId = int.Parse(paymentIdStr);
-                        await FulfillOrderAsync(paymentId, session.PaymentIntentId);
-                    }
-                }
-
-                return Ok();
             }
-            catch (StripeException e)
+            catch (StripeException ex)
             {
-                return BadRequest(e.Message);
+                _logger.LogWarning(ex, "Invalid Stripe webhook signature");
+                return BadRequest(ex.Message);
             }
+            var paymentIntentService = new PaymentIntentService();
+
+            _logger.LogInformation(
+                "Stripe webhook received. EventId: {EventId}, Type: {EventType}",
+                stripeEvent.Id,
+                stripeEvent.Type
+            );
+
+            switch (stripeEvent.Type)
+            {
+                case EventTypes.PaymentIntentSucceeded:
+                    await HandlePaymentSucceeded(stripeEvent);
+                    break;
+
+                case EventTypes.PaymentIntentPaymentFailed:
+                    await HandlePaymentFailed(stripeEvent);
+                    break;
+            }
+
+            return Ok();
         }
 
-        private async Task FulfillOrderAsync(int paymentId, string stripeTransactionId)
+        private async Task HandlePaymentSucceeded(Event stripeEvent)
         {
-            var payment = await _paymentService.GetPaymentByIdAsync(paymentId);
-            if (payment != null)
+            var intent = stripeEvent.Data.Object as PaymentIntent;
+            if (intent == null)
             {
-                payment.Status = PaymentStatus.Completed;
-                payment.Reference = stripeTransactionId;
-                await _paymentService.UpdatePaymentAsync(payment.Id, payment);
+                return;
+            }
 
-                var shipment = await _shipmentRepository.GetByIdAsync(payment.ShipmentId!.Value);
+            var paymentIdStr = intent.Metadata.GetValueOrDefault("PaymentId");
+            if (!int.TryParse(paymentIdStr, out var paymentId))
+            {
+                return;
+            }
+
+            var payment = await _paymentService.GetPaymentByIdAsync(paymentId);
+            if (payment == null || payment.Status == PaymentStatus.Paid)
+            {
+                return;
+            }
+
+            payment.Status = PaymentStatus.Paid;
+            payment.Reference = intent.Id;
+
+            await _paymentService.UpdatePaymentAsync(payment.Id, payment);
+
+            if (payment.ShipmentId.HasValue)
+            {
+                var shipment = await _shipmentRepository.GetByIdAsync(payment.ShipmentId.Value);
                 if (shipment != null)
                 {
                     shipment.Status = ShipmentStatus.Processing;
                     await _shipmentRepository.UpdateAsync(shipment);
                 }
             }
+        }
+
+        private async Task HandlePaymentFailed(Event stripeEvent)
+        {
+            var intent = stripeEvent.Data.Object as PaymentIntent;
+            if (intent == null)
+            {
+                return;
+            }
+
+            var paymentIdStr = intent.Metadata.GetValueOrDefault("PaymentId");
+            if (!int.TryParse(paymentIdStr, out var paymentId))
+            {
+                return;
+            }
+
+            var payment = await _paymentService.GetPaymentByIdAsync(paymentId);
+            if (payment == null)
+            {
+                return;
+            }
+
+            if (payment.Status == PaymentStatus.Failed)
+            {
+                return;
+            }
+
+            payment.Status = PaymentStatus.Failed;
+            await _paymentService.UpdatePaymentAsync(payment.Id, payment);
         }
     }
 }
