@@ -1,11 +1,12 @@
-﻿using Logex.API.Dtos.ZoneRateDtos;
+﻿using Logex.API.Constants;
+using Logex.API.Dtos.ZoneRateDtos;
 using Logex.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Logex.API.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(IdentityRoles.Admin)]
     [Route("api/[controller]")]
     [ApiController]
     public class ZoneRatesController : ControllerBase

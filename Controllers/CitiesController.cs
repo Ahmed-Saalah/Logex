@@ -1,4 +1,5 @@
-﻿using Logex.API.Dtos.CityDtos;
+﻿using Logex.API.Constants;
+using Logex.API.Dtos.CityDtos;
 using Logex.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -37,7 +38,7 @@ namespace Logex.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(IdentityRoles.Admin)]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateCityDto request)
         {
@@ -52,7 +53,7 @@ namespace Logex.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(IdentityRoles.Admin)]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateCityDto request)
         {
@@ -71,7 +72,7 @@ namespace Logex.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(IdentityRoles.Admin)]
         [HttpPatch("{id}/toggle-status")]
         public async Task<IActionResult> ToggleStatus(int id)
         {

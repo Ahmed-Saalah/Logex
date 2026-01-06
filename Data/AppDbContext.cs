@@ -24,7 +24,7 @@ namespace Logex.API.Data
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
-
+            modelBuilder.SeedIdentityRoles();
             modelBuilder.SeedShipmentMethodsData();
             modelBuilder.SeedLogisticsZonesData();
         }
