@@ -12,17 +12,15 @@ namespace Logex.API.Repository.Implementations
 
         public new async Task<Shipment> GetByIdAsync(int id)
         {
-            var entity = await _context
+            return await _context
                 .Shipments.Include(s => s.ShipmentMethod)
                 .FirstOrDefaultAsync(s => s.Id == id);
-
-            return entity;
         }
 
         public async Task<Shipment> GetShipmentByTrackingNumberAsync(string trackingNumber)
         {
             return await _context
-                .Set<Shipment>()
+                .Shipments.Include(s => s.ShipmentMethod)
                 .FirstOrDefaultAsync(s => s.TrackingNumber == trackingNumber);
         }
     }

@@ -196,7 +196,7 @@ namespace Logex.API.Controllers
             }
         }
 
-        [Authorize]
+        [Authorize(Roles = IdentityRoles.Admin)]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
