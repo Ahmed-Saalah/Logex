@@ -7,18 +7,31 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Logex.API.Services.Implementations
 {
-    public class UserManagement(UserManager<User> userManager, AppDbContext context)
-        : IUserManagement
+    public class UserManagement(
+        UserManager<User> userManager,
+        RoleManager<IdentityRole<int>> roleManager,
+        AppDbContext context
+    ) : IUserManagement
     {
-        public async Task<bool> CreateUser(User user)
+        public async Task<bool> CreateUser(User user, string role)
         {
             var _user = await GetUserByEmail(user.Email!);
             if (_user != null)
-            {
                 return false;
+
+            var result = await userManager.CreateAsync(user!, user!.PasswordHash!);
+            if (!result.Succeeded)
+                return false;
+
+            bool roleExists = await roleManager.RoleExistsAsync(role);
+            if (!roleExists)
+            {
+                await roleManager.CreateAsync(new IdentityRole<int>(role));
             }
 
-            return (await userManager.CreateAsync(user!, user!.PasswordHash!)).Succeeded;
+            await userManager.AddToRoleAsync(user, role);
+
+            return true;
         }
 
         public async Task<IEnumerable<User?>> GetAllUsers() => await context.Users.ToListAsync();
@@ -38,10 +51,16 @@ namespace Logex.API.Services.Implementations
 
             List<Claim> claims =
             [
-                new Claim("Fullname", _user!.FullName),
                 new Claim(ClaimTypes.NameIdentifier, _user!.Id.ToString()),
+                new Claim(ClaimTypes.Name, _user!.UserName ?? ""),
                 new Claim(ClaimTypes.Email, _user!.Email!),
             ];
+
+            var roles = await userManager.GetRolesAsync(_user!);
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
 
             return claims;
         }

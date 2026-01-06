@@ -17,7 +17,7 @@ namespace Logex.API.Services.Implementations
                 PasswordHash = user.Password,
             };
 
-            var result = await userManagement.CreateUser(newUser);
+            var result = await userManagement.CreateUser(newUser, user.Role);
 
             if (!result)
             {

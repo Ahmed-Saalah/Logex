@@ -5,7 +5,7 @@ namespace Logex.API.Services.Interfaces
 {
     public interface IUserManagement
     {
-        Task<bool> CreateUser(User user);
+        Task<bool> CreateUser(User user, string role);
         Task<bool> LoginUser(User user);
         Task<User?> GetUserByEmail(string email);
         Task<User> GetUserById(int id);
