@@ -14,6 +14,7 @@ namespace Logex.API.Repository.Implementations
         {
             return await _context
                 .ShipmentMethods.Where(_ => _.IsActive)
+                .Include(_ => _.Shipments)
                 .AsNoTracking()
                 .ToListAsync();
         }

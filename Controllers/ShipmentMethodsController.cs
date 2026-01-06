@@ -25,7 +25,18 @@ namespace Logex.API.Controllers
             {
                 return NotFound(new { Message = "Shipment method not found." });
             }
-            return Ok(method);
+            var response = new ShipmentMethodResponseDto
+            {
+                Id = method.Id,
+                Name = method.Name,
+                Cost = method.Cost,
+                Description = method.Description,
+                IsActive = method.IsActive,
+                Duration = method.Duration,
+                CreatedAt = method.CreatedAt,
+            };
+
+            return Ok(response);
         }
 
         [HttpGet("{id}/cost")]
@@ -68,7 +79,17 @@ namespace Logex.API.Controllers
             try
             {
                 var updatedMethod = await _shipmentMethodService.UpdateMethodAsync(id, request);
-                return Ok(updatedMethod);
+                var response = new ShipmentMethodResponseDto
+                {
+                    Id = updatedMethod.Id,
+                    Name = updatedMethod.Name,
+                    Cost = updatedMethod.Cost,
+                    Description = updatedMethod.Description,
+                    IsActive = updatedMethod.IsActive,
+                    Duration = updatedMethod.Duration,
+                    CreatedAt = updatedMethod.CreatedAt,
+                };
+                return Ok(response);
             }
             catch (KeyNotFoundException)
             {
@@ -94,7 +115,6 @@ namespace Logex.API.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                // Catches the "Cannot deactivate Default Method" safety check
                 return BadRequest(new { Message = ex.Message });
             }
             catch (KeyNotFoundException)

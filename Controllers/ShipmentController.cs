@@ -153,7 +153,7 @@ namespace Logex.API.Controllers
             }
         }
 
-        [Authorize]
+        [Authorize(Roles = IdentityRoles.Customer)]
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(
             int id,
@@ -163,7 +163,18 @@ namespace Logex.API.Controllers
             try
             {
                 var updatedShipment = await _shipmentService.UpdateAsync(id, updateShipmentDto);
-                return Ok(updatedShipment);
+                var response = new ShipmentResponseDto
+                {
+                    Id = updatedShipment.Id,
+                    TrackingNumber = updatedShipment.TrackingNumber,
+                    Status = updatedShipment.Status,
+                    TotalCost = updatedShipment.TotalCost,
+                    CreatedAt = updatedShipment.CreatedAt,
+                    ShipmentMethod = updatedShipment.ShipmentMethod.Name,
+                    ShipperName = updatedShipment.ShipperName,
+                    ReceiverName = updatedShipment.ReceiverName,
+                };
+                return Ok(response);
             }
             catch (KeyNotFoundException)
             {
