@@ -45,7 +45,7 @@ namespace Logex.API.Controllers
             }
         }
 
-        [Authorize(IdentityRoles.Admin)]
+        [Authorize(Roles = IdentityRoles.Admin)]
         [HttpGet("admin/all")]
         public async Task<IActionResult> GetAll()
         {
@@ -53,7 +53,7 @@ namespace Logex.API.Controllers
             return Ok(methods);
         }
 
-        [Authorize(IdentityRoles.Admin)]
+        [Authorize(Roles = IdentityRoles.Admin)]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateShipmentMethodDto request)
         {
@@ -61,7 +61,7 @@ namespace Logex.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = createdMethod.Id }, createdMethod);
         }
 
-        [Authorize(IdentityRoles.Admin)]
+        [Authorize(Roles = IdentityRoles.Admin)]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateShipmentMethodDto request)
         {
@@ -76,7 +76,7 @@ namespace Logex.API.Controllers
             }
         }
 
-        [Authorize(IdentityRoles.Admin)]
+        [Authorize(Roles = IdentityRoles.Admin)]
         [HttpPatch("{id}/toggle-status")]
         public async Task<IActionResult> ToggleStatus(int id)
         {

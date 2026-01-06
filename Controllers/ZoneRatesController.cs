@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Logex.API.Controllers
 {
-    [Authorize(IdentityRoles.Admin)]
+    [Authorize(Roles = IdentityRoles.Admin)]
     [Route("api/[controller]")]
     [ApiController]
     public class ZoneRatesController : ControllerBase

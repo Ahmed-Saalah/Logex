@@ -1,4 +1,7 @@
-﻿using Logex.API.Dtos.ShipmentDtos;
+﻿using System.Security.Claims;
+using Logex.API.Constants;
+using Logex.API.Dtos.ShipmentDtos;
+using Logex.API.Models;
 using Logex.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -36,17 +39,19 @@ namespace Logex.API.Controllers
                     return NotFound(new { Message = "shipemnt not found." });
                 }
 
-                var shipmentDTO = new ShipmentDTO
+                var response = new ShipmentResponseDto
                 {
-                    ShipmentId = shipemnt.Id,
+                    Id = shipemnt.Id,
+                    TrackingNumber = shipemnt.TrackingNumber,
+                    Status = shipemnt.Status,
+                    TotalCost = shipemnt.TotalCost,
+                    CreatedAt = shipemnt.CreatedAt,
+                    ShipmentMethod = shipemnt.ShipmentMethod.Name,
                     ShipperName = shipemnt.ShipperName,
                     ReceiverName = shipemnt.ReceiverName,
-                    CreatedAt = shipemnt.CreatedAt,
-                    TotalCost = shipemnt.TotalCost,
-                    Status = shipemnt.Status!,
                 };
 
-                return Ok(shipmentDTO);
+                return Ok(response);
             }
             catch (Exception ex)
             {
@@ -73,17 +78,19 @@ namespace Logex.API.Controllers
                     return NotFound(new { Message = "shipemnt not found." });
                 }
 
-                var shipmentDTO = new ShipmentDTO
+                var response = new ShipmentResponseDto
                 {
-                    ShipmentId = shipemnt.Id,
-                    ShipperName = shipemnt.ShipperName,
-                    ReceiverName = shipemnt.ReceiverName,
+                    Id = shipemnt.Id,
+                    TrackingNumber = shipemnt.TrackingNumber,
+                    Status = shipemnt.Status,
                     TotalCost = shipemnt.TotalCost,
                     CreatedAt = shipemnt.CreatedAt,
-                    Status = shipemnt.Status,
+                    ShipmentMethod = shipemnt.ShipmentMethod.Name,
+                    ShipperName = shipemnt.ShipperName,
+                    ReceiverName = shipemnt.ReceiverName,
                 };
 
-                return Ok(shipmentDTO);
+                return Ok(response);
             }
             catch (Exception ex)
             {
@@ -98,30 +105,40 @@ namespace Logex.API.Controllers
             }
         }
 
-        [Authorize]
+        [Authorize(Roles = IdentityRoles.Customer)]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateShipmentDto createShipmentDto)
         {
             try
             {
-                var username = User.Identity?.Name;
-                if (string.IsNullOrEmpty(username))
-                {
-                    return Unauthorized("User is not authenticated.");
-                }
+                var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                var user = await _userManagement.GetUserByEmail(username);
-                if (user == null)
+                if (
+                    string.IsNullOrEmpty(userIdString)
+                    || !int.TryParse(userIdString, out int userId)
+                )
                 {
-                    return Unauthorized("User not found.");
+                    return Unauthorized("User ID claim is missing or invalid.");
                 }
 
                 var shipment = await _shipmentService.CreateShipmentAsync(
                     createShipmentDto,
-                    user.Id
+                    userId
                 );
 
-                return CreatedAtAction(nameof(GetById), new { id = shipment.Id }, shipment);
+                var response = new ShipmentResponseDto
+                {
+                    Id = shipment.Id,
+                    TrackingNumber = shipment.TrackingNumber,
+                    Status = shipment.Status,
+                    TotalCost = shipment.TotalCost,
+                    CreatedAt = shipment.CreatedAt,
+                    ShipmentMethod = shipment.ShipmentMethod.Name,
+                    ShipperName = shipment.ShipperName,
+                    ReceiverName = shipment.ReceiverName,
+                };
+
+                return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
             }
             catch (ArgumentException ex)
             {

@@ -38,7 +38,7 @@ namespace Logex.API.Controllers
             }
         }
 
-        [Authorize(IdentityRoles.Admin)]
+        [Authorize(Roles = IdentityRoles.Admin)]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateCityDto request)
         {
@@ -53,7 +53,7 @@ namespace Logex.API.Controllers
             }
         }
 
-        [Authorize(IdentityRoles.Admin)]
+        [Authorize(Roles = IdentityRoles.Admin)]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateCityDto request)
         {
@@ -72,7 +72,7 @@ namespace Logex.API.Controllers
             }
         }
 
-        [Authorize(IdentityRoles.Admin)]
+        [Authorize(Roles = IdentityRoles.Admin)]
         [HttpPatch("{id}/toggle-status")]
         public async Task<IActionResult> ToggleStatus(int id)
         {

@@ -1,6 +1,5 @@
 ﻿using Logex.API.Constants;
 using Logex.API.Dtos.ZoneDtos;
-using Logex.API.Services.Implementations;
 using Logex.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +17,7 @@ namespace Logex.API.Controllers
             _zoneService = zoneService;
         }
 
-        [Authorize(IdentityRoles.Admin)]
+        [Authorize(Roles = IdentityRoles.Admin)]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -26,7 +25,7 @@ namespace Logex.API.Controllers
             return Ok(zones);
         }
 
-        [Authorize(IdentityRoles.Admin)]
+        [Authorize(Roles = IdentityRoles.Admin)]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -41,7 +40,7 @@ namespace Logex.API.Controllers
             }
         }
 
-        [Authorize(IdentityRoles.Admin)]
+        [Authorize(Roles = IdentityRoles.Admin)]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ZoneDto request)
         {
@@ -56,7 +55,7 @@ namespace Logex.API.Controllers
             }
         }
 
-        [Authorize(IdentityRoles.Admin)]
+        [Authorize(Roles = IdentityRoles.Admin)]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] ZoneDto request)
         {
@@ -75,7 +74,7 @@ namespace Logex.API.Controllers
             }
         }
 
-        [Authorize(IdentityRoles.Admin)]
+        [Authorize(Roles = IdentityRoles.Admin)]
         [HttpPatch("{id}/toggle-status")]
         public async Task<IActionResult> ToggleStatus(int id)
         {

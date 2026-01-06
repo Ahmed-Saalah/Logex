@@ -9,7 +9,7 @@ namespace Logex.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = IdentityRoles.Customer)]
     public class PaymentController : ControllerBase
     {
         private readonly IShipmentService _shipmentService;
