@@ -19,7 +19,7 @@ namespace Logex.API.Data.Configurations
             builder
                 .HasMany(sm => sm.Shipments)
                 .WithOne(s => s.ShipmentMethod)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

@@ -16,7 +16,7 @@ namespace Logex.API.Data.Configurations
                 .HasMany(c => c.Shipments)
                 .WithOne(s => s.User)
                 .HasForeignKey(s => s.UserId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

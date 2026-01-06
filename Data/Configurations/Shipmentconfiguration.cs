@@ -36,18 +36,19 @@ namespace Logex.API.Data.Configurations
 
             builder.Property(s => s.Quantity).IsRequired();
 
-            builder.Property(s => s.TotalCost).IsRequired();
+            builder.Property(s => s.TotalCost).IsRequired().HasPrecision(18, 2);
 
             builder
                 .HasOne(s => s.User)
                 .WithMany(c => c.Shipments)
                 .HasForeignKey(s => s.UserId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder
                 .HasOne(s => s.ShipmentMethod)
                 .WithMany(sm => sm.Shipments)
-                .OnDelete(DeleteBehavior.SetNull);
+                .HasForeignKey(s => s.ShipmentMethodId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder
                 .HasOne(s => s.Payment)
