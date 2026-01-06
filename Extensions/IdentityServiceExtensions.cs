@@ -16,7 +16,8 @@ namespace Logex.API.Extensions
         {
             services
                 .AddIdentity<User, IdentityRole<int>>()
-                .AddEntityFrameworkStores<AppDbContext>();
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddDefaultTokenProviders();
 
             services
                 .AddAuthentication(options =>
@@ -32,11 +33,11 @@ namespace Logex.API.Extensions
                     op.TokenValidationParameters = new TokenValidationParameters()
                     {
                         ValidateIssuer = true,
-                        ValidIssuer = config["JWT:IssuerIP"],
+                        ValidIssuer = config["JWT:Issuer"],
                         ValidateAudience = true,
-                        ValidAudience = config["JWT:AudienceIP"],
+                        ValidAudience = config["JWT:Audience"],
                         IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(config["JWT:SecurityKey"]!)
+                            Encoding.UTF8.GetBytes(config["JWT:Key"]!)
                         ),
                     };
                 });

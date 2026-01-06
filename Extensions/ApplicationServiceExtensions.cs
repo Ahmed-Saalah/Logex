@@ -38,7 +38,9 @@ namespace Logex.API.Extensions
             services.AddScoped<IShipmentMethodRepository, ShipmentMethodRepository>();
             services.AddScoped<IPaymentRepository, PaymentRepository>();
             services.AddScoped<IPricingRepository, PricingRepository>();
-
+            services.AddScoped<IZoneRepository, ZoneRepository>();
+            services.AddScoped<ICityRepository, CityRepository>();
+            services.AddScoped<IZoneRateRepository, ZoneRateRepository>();
             // Domain Services
             services.AddScoped<IShipmentService, ShipmentService>();
             services.AddScoped<IShipmentMethodService, ShipmentMethodService>();
@@ -54,7 +56,7 @@ namespace Logex.API.Extensions
                 .AddControllers()
                 .AddJsonOptions(options =>
                 {
-                    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+                    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
                 });
 
             // CORS & Swagger
@@ -71,8 +73,7 @@ namespace Logex.API.Extensions
 
             services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
-            services.AddEndpointsApiExplorer();
-            services.AddSwaggerGen();
+            services.AddSwaggerDocumentation();
 
             return services;
         }
