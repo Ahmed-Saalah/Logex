@@ -256,5 +256,33 @@ namespace Logex.API.Controllers
             );
             return Ok(new { Message = "Shipment marked as delivered." });
         }
+
+        [Authorize(Roles = IdentityRoles.Admin)]
+        [HttpPut("{id:int}/cancel")]
+        public async Task<IActionResult> MarkShipmentAsCanceled(int id)
+        {
+            var shipment = await _shipmentService.GetByIdAsync(id);
+            if (shipment == null)
+            {
+                return NotFound(new { Message = "Shipment not found." });
+            }
+            shipment.Status = ShipmentStatus.Cancelled;
+            await _shipmentService.UpdateAsync(
+                id,
+                new UpdateShipmentDto
+                {
+                    ShipperCityId = shipment.ShipperCityId,
+                    ShipperStreet = shipment.ShipperStreet,
+                    ShipperPhone = shipment.ShipperPhone,
+                    ReceiverCityId = shipment.ReceiverCityId,
+                    ReceiverStreet = shipment.ReceiverStreet,
+                    ReceiverPhone = shipment.ReceiverPhone,
+                    ShipmentMethodId = shipment.ShipmentMethodId,
+                    Quantity = shipment.Quantity,
+                    Weight = shipment.Weight,
+                }
+            );
+            return Ok(new { Message = "Shipment marked as canceled." });
+        }
     }
 }
