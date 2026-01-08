@@ -139,5 +139,18 @@ namespace Logex.API.Services.Implementations
             await _shipmentRepository.DeleteAsync(id);
             return new ServiceResponse(true, "Shipment deleted successfully.");
         }
+
+        public async Task<string> MarkShipmentAsDelivered(int id)
+        {
+            var shipemnt = await _shipmentRepository.GetByIdAsync(id);
+            if (shipemnt == null)
+            {
+                throw new KeyNotFoundException("Method not found.");
+            }
+            shipemnt.Status = ShipmentStatus.Delivered;
+
+            await _shipmentRepository.UpdateAsync(shipemnt);
+            return shipemnt.Status;
+        }
     }
 }

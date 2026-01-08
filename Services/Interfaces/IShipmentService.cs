@@ -15,5 +15,7 @@ namespace Logex.API.Services.Interfaces
         Task<Shipment> UpdateAsync(int id, UpdateShipmentDto shipment);
 
         Task<ServiceResponse> DeleteAsync(int id);
+
+        Task<string> MarkShipmentAsDelivered(int id);
     }
 }

@@ -233,28 +233,26 @@ namespace Logex.API.Controllers
         [HttpPut("{id:int}/delivered")]
         public async Task<IActionResult> MarkShipmentAsDelivered(int id)
         {
-            var shipment = await _shipmentService.GetByIdAsync(id);
-            if (shipment == null)
+            try
+            {
+                var newStatus = await _shipmentService.MarkShipmentAsDelivered(id);
+                return Ok(
+                    new
+                    {
+                        Message = "Shipment updated successfully.",
+                        Status = newStatus,
+                        shipmentId = id,
+                    }
+                );
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+            catch (KeyNotFoundException)
             {
                 return NotFound(new { Message = "Shipment not found." });
             }
-            shipment.Status = ShipmentStatus.Delivered;
-            await _shipmentService.UpdateAsync(
-                id,
-                new UpdateShipmentDto
-                {
-                    ShipperCityId = shipment.ShipperCityId,
-                    ShipperStreet = shipment.ShipperStreet,
-                    ShipperPhone = shipment.ShipperPhone,
-                    ReceiverCityId = shipment.ReceiverCityId,
-                    ReceiverStreet = shipment.ReceiverStreet,
-                    ReceiverPhone = shipment.ReceiverPhone,
-                    ShipmentMethodId = shipment.ShipmentMethodId,
-                    Quantity = shipment.Quantity,
-                    Weight = shipment.Weight,
-                }
-            );
-            return Ok(new { Message = "Shipment marked as delivered." });
         }
 
         [Authorize(Roles = IdentityRoles.Admin)]
