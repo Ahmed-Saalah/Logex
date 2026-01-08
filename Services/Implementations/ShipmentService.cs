@@ -145,9 +145,22 @@ namespace Logex.API.Services.Implementations
             var shipemnt = await _shipmentRepository.GetByIdAsync(id);
             if (shipemnt == null)
             {
-                throw new KeyNotFoundException("Method not found.");
+                throw new KeyNotFoundException("Shipment not found.");
             }
             shipemnt.Status = ShipmentStatus.Delivered;
+
+            await _shipmentRepository.UpdateAsync(shipemnt);
+            return shipemnt.Status;
+        }
+
+        public async Task<string> MarkShipmentAsCanceled(int id)
+        {
+            var shipemnt = await _shipmentRepository.GetByIdAsync(id);
+            if (shipemnt == null)
+            {
+                throw new KeyNotFoundException("Shipment not found.");
+            }
+            shipemnt.Status = ShipmentStatus.Cancelled;
 
             await _shipmentRepository.UpdateAsync(shipemnt);
             return shipemnt.Status;

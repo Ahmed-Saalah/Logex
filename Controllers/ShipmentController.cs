@@ -239,7 +239,7 @@ namespace Logex.API.Controllers
                 return Ok(
                     new
                     {
-                        Message = "Shipment updated successfully.",
+                        Message = "Shipment status updated successfully.",
                         Status = newStatus,
                         shipmentId = id,
                     }
@@ -259,28 +259,26 @@ namespace Logex.API.Controllers
         [HttpPut("{id:int}/cancel")]
         public async Task<IActionResult> MarkShipmentAsCanceled(int id)
         {
-            var shipment = await _shipmentService.GetByIdAsync(id);
-            if (shipment == null)
+            try
+            {
+                var newStatus = await _shipmentService.MarkShipmentAsCanceled(id);
+                return Ok(
+                    new
+                    {
+                        Message = "Shipment status updated successfully.",
+                        Status = newStatus,
+                        shipmentId = id,
+                    }
+                );
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+            catch (KeyNotFoundException)
             {
                 return NotFound(new { Message = "Shipment not found." });
             }
-            shipment.Status = ShipmentStatus.Cancelled;
-            await _shipmentService.UpdateAsync(
-                id,
-                new UpdateShipmentDto
-                {
-                    ShipperCityId = shipment.ShipperCityId,
-                    ShipperStreet = shipment.ShipperStreet,
-                    ShipperPhone = shipment.ShipperPhone,
-                    ReceiverCityId = shipment.ReceiverCityId,
-                    ReceiverStreet = shipment.ReceiverStreet,
-                    ReceiverPhone = shipment.ReceiverPhone,
-                    ShipmentMethodId = shipment.ShipmentMethodId,
-                    Quantity = shipment.Quantity,
-                    Weight = shipment.Weight,
-                }
-            );
-            return Ok(new { Message = "Shipment marked as canceled." });
         }
     }
 }
